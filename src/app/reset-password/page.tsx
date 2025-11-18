@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
@@ -9,6 +10,7 @@ import AppTheme from '../../theme/AppTheme';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/toast';
 import ResetPassword from '@/components/auth/ResetPassword';
+import { CircularProgress, Box } from '@mui/material';
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -49,14 +51,14 @@ const ResetPasswordContainer = styled(Stack)(({ theme }) => ({
     }),
 }));
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const id = searchParams.get('id');
     const toast = useToast();
 
     React.useEffect(() => {
-        // If no email is provided, redirect to forgot password page
+        // If no id is provided, redirect to forgot password page
         if (!id) {
             toast.error("Session expired. Please start over.");
             router.push('/forgot-password');
@@ -68,12 +70,26 @@ export default function ResetPasswordPage() {
     }
 
     return (
+        <Card variant="outlined">
+            <ResetPassword id={id} />
+        </Card>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
         <AppTheme>
             <CssBaseline enableColorScheme />
             <ResetPasswordContainer direction="column" justifyContent="space-between">
-                <Card variant="outlined">
-                    <ResetPassword id={id} />
-                </Card>
+                <Suspense fallback={
+                    <Card variant="outlined">
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                            <CircularProgress />
+                        </Box>
+                    </Card>
+                }>
+                    <ResetPasswordContent />
+                </Suspense>
             </ResetPasswordContainer>
         </AppTheme>
     );

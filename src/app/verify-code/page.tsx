@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from 'react';
+import { Suspense } from 'react';
 import CssBaseline from '@mui/material/CssBaseline';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
@@ -9,6 +10,7 @@ import AppTheme from '../../theme/AppTheme';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/context/toast';
 import VerifyCode from '@/components/auth/VerifyCode';
+import { CircularProgress, Box } from '@mui/material';
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -49,7 +51,7 @@ const VerifyCodeContainer = styled(Stack)(({ theme }) => ({
     }),
 }));
 
-export default function VerifyCodePage() {
+function VerifyCodeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get('email');
@@ -72,15 +74,29 @@ export default function VerifyCodePage() {
     }
 
     return (
+        <Card variant="outlined">
+            <VerifyCode
+                email={email}
+                onBack={handleBack}
+            />
+        </Card>
+    );
+}
+
+export default function VerifyCodePage() {
+    return (
         <AppTheme>
             <CssBaseline enableColorScheme />
             <VerifyCodeContainer direction="column" justifyContent="space-between">
-                <Card variant="outlined">
-                    <VerifyCode
-                        email={email}
-                        onBack={handleBack}
-                    />
-                </Card>
+                <Suspense fallback={
+                    <Card variant="outlined">
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+                            <CircularProgress />
+                        </Box>
+                    </Card>
+                }>
+                    <VerifyCodeContent />
+                </Suspense>
             </VerifyCodeContainer>
         </AppTheme>
     );

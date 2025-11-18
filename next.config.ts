@@ -18,10 +18,6 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // Performance optimizations
-  reactStrictMode: true,
-  swcMinify: true,
-
   // Disable ESLint and TypeScript checks during build (for Vercel deployment)
   eslint: {
     ignoreDuringBuilds: true,
