@@ -75,7 +75,7 @@ export default function LandingPage() {
                                         textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
                                     }}
                                 >
-                                    Post your favorite climbs, explore top-rated rails and connect with a global community of adventurers sharing their best hiking and climbing locations
+                                    Post your favorite climbs, explore top-rated trails and connect with a global community of adventurers sharing their best hiking and climbing locations
                                 </Typography>
                             </Box>
                         </Box>

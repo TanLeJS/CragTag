@@ -25,7 +25,6 @@ import {
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarIcon from '@mui/icons-material/Star';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -58,7 +57,6 @@ function Post({ post, onPostUpdated, onPostDeleted, priority = false }: PostComp
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [commentModalOpen, setCommentModalOpen] = useState(false);
-    const [showCommentInput, setShowCommentInput] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -149,7 +147,6 @@ function Post({ post, onPostUpdated, onPostDeleted, priority = false }: PostComp
             try {
                 await addComment(post._id, commentText);
                 setCommentText('');
-                setShowCommentInput(false);
                 // Increment comment count
                 handleCommentAdded();
                 toast.success('Comment added successfully');
@@ -585,18 +582,6 @@ function Post({ post, onPostUpdated, onPostDeleted, priority = false }: PostComp
                         </Typography>
                     </Box>
                 </Box>
-                <IconButton
-                    aria-label="Save post"
-                    sx={{
-                        color: '#000',
-                        padding: { xs: '4px', sm: '6px' },
-                        '&:hover': {
-                            color: '#737373',
-                        },
-                    }}
-                >
-                    <BookmarkBorderIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
-                </IconButton>
             </CardActions>
 
             <CardContent sx={{ padding: { xs: 1.5, sm: 2 }, pt: { xs: 1, sm: 1.5 }, pb: { xs: 1.5, sm: 2 } }}>
@@ -669,13 +654,13 @@ function Post({ post, onPostUpdated, onPostDeleted, priority = false }: PostComp
                             display: 'flex',
                             alignItems: 'center',
                             gap: 0.5,
-                            bgcolor: 'rgba(255, 107, 53, 0.1)',
+                            bgcolor: '#ff6b35',
                             px: 1.5,
                             py: 0.5,
                             borderRadius: 2,
-                            border: '1px solid rgba(255, 107, 53, 0.2)',
+                            border: '2px solid #e55a24',
                         }}>
-                            <Typography variant="body2" sx={{ color: '#ff6b35', fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 600 }}>
+                            <Typography variant="body2" sx={{ color: '#fff', fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 700 }}>
                                 Difficulty: {getDifficultyEmoji(post.difficulty)}
                             </Typography>
                         </Box>
@@ -684,13 +669,13 @@ function Post({ post, onPostUpdated, onPostDeleted, priority = false }: PostComp
                         display: 'flex',
                         alignItems: 'center',
                         gap: 0.5,
-                        bgcolor: 'rgba(255, 193, 7, 0.1)',
+                        bgcolor: '#ff8c00',
                         px: 1.5,
                         py: 0.5,
                         borderRadius: 2,
-                        border: '1px solid rgba(255, 193, 7, 0.2)',
+                        border: '2px solid #e67e00',
                     }}>
-                        <Typography variant="body2" sx={{ color: '#f57c00', fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 600 }}>
+                        <Typography variant="body2" sx={{ color: '#fff', fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 700 }}>
                             Rating:
                         </Typography>
                         <Rating

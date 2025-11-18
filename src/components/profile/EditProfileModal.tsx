@@ -29,7 +29,6 @@ interface UserInfo {
 }
 
 interface EditProfileModalProps {
-    userName: string;
     open: boolean;
     onClose: () => void;
     userInfo: UserInfo | null;

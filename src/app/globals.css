@@ -23,7 +23,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Performance optimizations */
-  font-display: swap; /* Ensure text is visible during font load */
+  font-display: swap;
+  /* Ensure text is visible during font load */
 }
 
 * {
@@ -59,13 +60,18 @@ a {
 }
 
 /* Performance optimizations */
-img, picture, video, canvas, svg {
+img,
+picture,
+video,
+canvas,
+svg {
   display: block;
   max-width: 100%;
 }
 
 /* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -73,13 +79,6 @@ img, picture, video, canvas, svg {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-/* Improve rendering performance for animations */
-@media (prefers-reduced-motion: no-preference) {
-  :root {
-    /* Removed scroll-behavior: smooth to prevent auto-scrolling issues */
   }
 }
 

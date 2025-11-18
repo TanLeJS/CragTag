@@ -3,13 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import {
     Box,
-    Typography,
     List,
     ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
-    Avatar,
 } from '@mui/material';
 // Hiking-themed icons (revert to: Home, Search, Notifications, AddCircle if needed)
 import TerrainIcon from '@mui/icons-material/Terrain';

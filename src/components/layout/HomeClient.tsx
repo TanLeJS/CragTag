@@ -5,12 +5,10 @@ import Feed from '@/components/post/Feed';
 import LandingPage from '@/components/layout/LandingPage';
 import { useUser } from '@/context/user/UserContext';
 import { NotificationProvider } from '@/context/notification/NotificationContext';
-import { SocketProvider, useSocket } from '@/components/providers/SocketProvider';
+import { SocketProvider } from '@/components/providers/SocketProvider';
 
 function FeedWithSocket() {
-    const { isConnected } = useSocket();
-
-    return <Feed isConnected={isConnected} />;
+    return <Feed />;
 }
 
 export default function HomeClient() {

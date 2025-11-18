@@ -10,7 +10,6 @@ import IconButton from '@mui/material/IconButton';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useToast } from '@/context/toast';
 import { useRouter } from 'next/navigation';
-import SignatureLogo from '../common/SignatureLogo';
 
 interface ForgotPasswordProps {
   onBackToSignIn?: () => void;

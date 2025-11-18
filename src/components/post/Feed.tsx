@@ -10,7 +10,6 @@ import {
     Stack,
     CircularProgress,
     Skeleton,
-    IconButton,
     Menu,
     MenuItem,
 } from '@mui/material';
@@ -28,7 +27,7 @@ import { useUser } from '@/context/user/UserContext';
 import { useRouter } from 'next/navigation';
 
 
-export default function Feed({ isConnected }: { isConnected: boolean }) {
+export default function Feed() {
     const [posts, setPosts] = useState<PostType[]>([]);
     const [loading, setLoading] = useState(true);
     const [createModalOpen, setCreateModalOpen] = useState(false);

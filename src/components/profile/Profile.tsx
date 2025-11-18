@@ -11,12 +11,9 @@ import {
     Tabs,
     Tab,
     CircularProgress,
-    IconButton,
     Tooltip,
 } from '@mui/material';
 import GridOnIcon from '@mui/icons-material/GridOn';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
-import PersonPinIcon from '@mui/icons-material/PersonPin';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -395,6 +392,25 @@ export default function Profile({ userName }: { userName: string }) {
         ));
     };
 
+    const handlePostUpdated = (postId: string, updatedPost: Post) => {
+        // Update the selected post for the modal
+        setSelectedPost(updatedPost);
+
+        // Update the post in the grid
+        setPosts(prev => prev.map(p =>
+            p._id === postId ? updatedPost : p
+        ));
+    };
+
+    const handlePostDeleted = (postId: string) => {
+        // Remove post from the grid
+        setPosts(prev => prev.filter(p => p._id !== postId));
+
+        // Close the modal
+        setCommentModalOpen(false);
+        setSelectedPost(null);
+    };
+
     if (loading && !userInfo) {
         return (
             <AppLayout>
@@ -587,18 +603,6 @@ export default function Profile({ userName }: { userName: string }) {
                                 iconPosition="start"
                                 sx={{ gap: { xs: 0.5, md: 1 } }}
                             />
-                            <Tab
-                                icon={<BookmarkBorderIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />}
-                                label="Saved"
-                                iconPosition="start"
-                                sx={{ gap: { xs: 0.5, md: 1 } }}
-                            />
-                            <Tab
-                                icon={<PersonPinIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />}
-                                label="Tagged"
-                                iconPosition="start"
-                                sx={{ gap: { xs: 0.5, md: 1 } }}
-                            />
                         </Tabs>
                     </Box>
 
@@ -754,7 +758,6 @@ export default function Profile({ userName }: { userName: string }) {
 
             {/* Edit Profile Modal */}
             <EditProfileModal
-                userName={userName}
                 open={openEditModal}
                 onClose={handleCloseEditModal}
                 userInfo={userInfo}
@@ -772,6 +775,8 @@ export default function Profile({ userName }: { userName: string }) {
                     onLikePost={handleLikePost}
                     onCommentAdded={handleCommentAdded}
                     onCommentDeleted={handleCommentDeleted}
+                    onPostUpdated={handlePostUpdated}
+                    onPostDeleted={handlePostDeleted}
                 />
             )}
         </AppLayout>

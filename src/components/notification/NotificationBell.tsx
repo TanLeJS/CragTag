@@ -7,8 +7,6 @@ import {
     Drawer,
     Box,
     Typography,
-    Avatar,
-    Button,
     CircularProgress,
     List,
     ListItem,

@@ -30,7 +30,3 @@ export default function MuiProvider({ children }: { children: React.ReactNode })
 }
 
 
-
-
-
-

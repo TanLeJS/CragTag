@@ -12,9 +12,9 @@ import {
     TextField,
     Button,
     Divider,
+    CircularProgress,
     Menu,
     MenuItem,
-    CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -23,13 +23,16 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { Post, PostComment } from '@/types/post.types';
 import { formatPostTimestamp } from '@/utils/post.utils';
 import { PLACEHOLDER_IMAGE } from '@/constants/images';
-import { addComment, likePost, fetchComments, updateComment, deleteComment } from '@/services/api.service';
+import { addComment, likePost, fetchComments, updateComment, deleteComment, deletePost as deletePostAPI, fetchPostById } from '@/services/api.service';
 import { useUser } from '@/context/user/UserContext';
 import { useToast } from '@/context/toast';
+import EditPostModal from './EditPostModal';
 
 interface CommentModalProps {
     open: boolean;
@@ -40,6 +43,8 @@ interface CommentModalProps {
     onLikePost?: () => void;
     onCommentDeleted?: () => void;
     onCommentAdded?: () => void;
+    onPostUpdated?: (postId: string, updatedPost: Post) => void;
+    onPostDeleted?: (postId: string) => void;
 }
 
 // Helper to format time ago (Instagram style)
@@ -64,7 +69,9 @@ export default function CommentModal({
     likeCount: likeCountProp,
     onLikePost,
     onCommentDeleted,
-    onCommentAdded
+    onCommentAdded,
+    onPostUpdated,
+    onPostDeleted
 }: CommentModalProps) {
     const [commentText, setCommentText] = useState('');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -76,8 +83,19 @@ export default function CommentModal({
     const [anchorEl, setAnchorEl] = useState<{ element: HTMLElement; commentId: string } | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+
+    // Post menu state
+    const [postMenuAnchorEl, setPostMenuAnchorEl] = useState<HTMLElement | null>(null);
+    const [editPostModalOpen, setEditPostModalOpen] = useState(false);
+    const [deletePostDialogOpen, setDeletePostDialogOpen] = useState(false);
+    const [deletingPost, setDeletingPost] = useState(false);
+    const [refreshingPost, setRefreshingPost] = useState(false);
+
     const { user } = useUser();
     const toast = useToast();
+
+    // Check if current user is the post owner
+    const isOwnPost = user?.id === post.userId;
 
     // Helper function to check if current user liked the post
     const checkIsLiked = (postData: Post) => {
@@ -156,7 +174,8 @@ export default function CommentModal({
             ...prev,
             [commentId]: !prev[commentId]
         }));
-        // TODO: API call to like comment
+        // Note: Comment likes are currently client-side only
+        // Backend endpoint for liking comments not yet implemented
     };
 
     const refetchComments = async (showSuccessToast: boolean = true) => {
@@ -270,6 +289,74 @@ export default function CommentModal({
         }
     };
 
+    // Post menu handlers
+    const handlePostMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setPostMenuAnchorEl(event.currentTarget);
+    };
+
+    const handlePostMenuClose = () => {
+        setPostMenuAnchorEl(null);
+    };
+
+    const handleEditPost = () => {
+        setPostMenuAnchorEl(null);
+        setEditPostModalOpen(true);
+    };
+
+    const handleDeletePost = () => {
+        setPostMenuAnchorEl(null);
+        setDeletePostDialogOpen(true);
+    };
+
+    const handleCloseFromMenu = () => {
+        setPostMenuAnchorEl(null);
+        onClose();
+    };
+
+    const handleConfirmDeletePost = async () => {
+        setDeletingPost(true);
+        try {
+            const response = await deletePostAPI(post._id);
+
+            if (response.success) {
+                setDeletePostDialogOpen(false);
+                toast.success(response.message || 'Post deleted successfully');
+                onClose(); // Close the modal first
+
+                // Notify parent to remove post
+                if (onPostDeleted) {
+                    onPostDeleted(post._id);
+                }
+            } else {
+                toast.error(response.message || 'Failed to delete post');
+            }
+        } catch (error: any) {
+            console.error('Error deleting post:', error);
+            toast.error(error.message || 'Failed to delete post');
+        } finally {
+            setDeletingPost(false);
+        }
+    };
+
+    const handlePostUpdated = async () => {
+        setRefreshingPost(true);
+        try {
+            const updatedPost = await fetchPostById(post._id);
+
+            if (onPostUpdated) {
+                onPostUpdated(post._id, updatedPost);
+            }
+
+            toast.success('Post updated successfully');
+            setEditPostModalOpen(false);
+        } catch (error) {
+            console.error('Error fetching updated post:', error);
+            toast.error('Failed to refresh post');
+        } finally {
+            setRefreshingPost(false);
+        }
+    };
+
     return (
         <Dialog
             open={open}
@@ -297,23 +384,105 @@ export default function CommentModal({
             }}
         >
             <Box sx={{ display: 'flex', height: '100%', position: 'relative' }}>
-                {/* Close button */}
-                <IconButton
-                    onClick={onClose}
-                    sx={{
-                        position: 'absolute',
-                        right: 8,
-                        top: 8,
-                        zIndex: 10,
-                        bgcolor: 'rgba(0, 0, 0, 0.5)',
-                        color: '#fff',
-                        '&:hover': {
-                            bgcolor: 'rgba(0, 0, 0, 0.7)',
-                        },
-                    }}
-                >
-                    <CloseIcon />
-                </IconButton>
+                {/* Close/More button */}
+                {isOwnPost ? (
+                    <>
+                        <IconButton
+                            onClick={handlePostMenuClick}
+                            aria-label="Post options"
+                            aria-haspopup="true"
+                            sx={{
+                                position: 'absolute',
+                                right: 8,
+                                top: 8,
+                                zIndex: 10,
+                            }}
+                        >
+                            <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                            anchorEl={postMenuAnchorEl}
+                            open={Boolean(postMenuAnchorEl)}
+                            onClose={handlePostMenuClose}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            PaperProps={{
+                                sx: {
+                                    borderRadius: 2,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                    minWidth: 150,
+                                }
+                            }}
+                        >
+                            <MenuItem
+                                onClick={handleEditPost}
+                                sx={{
+                                    gap: 1.5,
+                                    py: 1.5,
+                                    fontSize: '0.875rem',
+                                    '&:hover': {
+                                        bgcolor: '#f5f5f5',
+                                    }
+                                }}
+                            >
+                                <EditIcon sx={{ fontSize: '1.25rem', color: '#0095f6' }} />
+                                Edit Post
+                            </MenuItem>
+                            <MenuItem
+                                onClick={handleDeletePost}
+                                sx={{
+                                    gap: 1.5,
+                                    py: 1.5,
+                                    fontSize: '0.875rem',
+                                    color: '#ed4956',
+                                    '&:hover': {
+                                        bgcolor: '#fff5f5',
+                                    }
+                                }}
+                            >
+                                <DeleteIcon sx={{ fontSize: '1.25rem' }} />
+                                Delete Post
+                            </MenuItem>
+                            <MenuItem
+                                onClick={handleCloseFromMenu}
+                                sx={{
+                                    gap: 1.5,
+                                    py: 1.5,
+                                    fontSize: '0.875rem',
+                                    '&:hover': {
+                                        bgcolor: '#f5f5f5',
+                                    }
+                                }}
+                            >
+                                <CloseIcon sx={{ fontSize: '1.25rem', color: '#262626' }} />
+                                Close
+                            </MenuItem>
+                        </Menu>
+                    </>
+                ) : (
+                    <IconButton
+                        onClick={onClose}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8,
+                            zIndex: 10,
+                            bgcolor: 'rgba(0, 0, 0, 0.5)',
+                            color: '#fff',
+                            '&:hover': {
+                                bgcolor: 'rgba(0, 0, 0, 0.7)',
+                            },
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                )}
 
                 {/* Left side - Image */}
                 <Box
@@ -564,8 +733,8 @@ export default function CommentModal({
                                                                     1 like
                                                                 </Typography>
                                                             )}
-                                                            {isOwnComment ? (
-                                                                // Show Edit and Delete for own comments
+                                                            {isOwnComment && (
+                                                                // Show Edit and Delete for own comments only
                                                                 <>
                                                                     <Typography
                                                                         variant="caption"
@@ -594,28 +763,14 @@ export default function CommentModal({
                                                                         Delete
                                                                     </Typography>
                                                                 </>
-                                                            ) : (
-                                                                // Show Reply for others' comments
-                                                                <Typography
-                                                                    variant="caption"
-                                                                    sx={{
-                                                                        color: '#737373',
-                                                                        fontSize: '0.75rem',
-                                                                        fontWeight: 600,
-                                                                        cursor: 'pointer',
-                                                                        '&:hover': { color: '#262626' }
-                                                                    }}
-                                                                >
-                                                                    Reply
-                                                                </Typography>
                                                             )}
                                                         </Box>
                                                     </>
                                                 )}
                                             </Box>
 
-                                            {/* Comment like button */}
-                                            {!isEditing && (
+                                            {/* Comment like button - only show for own comments */}
+                                            {!isEditing && isOwnComment && (
                                                 <IconButton
                                                     size="small"
                                                     onClick={() => handleCommentLike(comment._id)}
@@ -689,14 +844,6 @@ export default function CommentModal({
                                     <ChatBubbleOutlineIcon />
                                 </IconButton>
                             </Box>
-                            <IconButton
-                                sx={{
-                                    color: '#262626',
-                                    padding: '8px',
-                                }}
-                            >
-                                <BookmarkBorderIcon />
-                            </IconButton>
                         </Box>
 
                         {/* Like count */}
@@ -780,7 +927,7 @@ export default function CommentModal({
                 </Box>
             </Box>
 
-            {/* Delete Confirmation Dialog */}
+            {/* Delete Comment Confirmation Dialog */}
             <Dialog
                 open={deleteDialogOpen}
                 onClose={handleCancelDelete}
@@ -826,6 +973,66 @@ export default function CommentModal({
                         }}
                     >
                         Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Edit Post Modal */}
+            {isOwnPost && (
+                <EditPostModal
+                    open={editPostModalOpen}
+                    onClose={() => setEditPostModalOpen(false)}
+                    onPostUpdated={handlePostUpdated}
+                    post={post}
+                />
+            )}
+
+            {/* Delete Post Confirmation Dialog */}
+            <Dialog
+                open={deletePostDialogOpen}
+                onClose={() => !deletingPost && setDeletePostDialogOpen(false)}
+                maxWidth="xs"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                    }
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 600, color: '#000' }}>
+                    Delete Post?
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ color: '#737373' }}>
+                        Are you sure you want to delete this post? This action cannot be undone and will remove all comments and likes.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+                    <Button
+                        onClick={() => setDeletePostDialogOpen(false)}
+                        disabled={deletingPost}
+                        sx={{
+                            textTransform: 'none',
+                            color: '#262626',
+                            fontWeight: 600,
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleConfirmDeletePost}
+                        disabled={deletingPost}
+                        variant="contained"
+                        sx={{
+                            textTransform: 'none',
+                            bgcolor: '#ed4956',
+                            fontWeight: 600,
+                            '&:hover': {
+                                bgcolor: '#c13347',
+                            },
+                        }}
+                    >
+                        {deletingPost ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Delete'}
                     </Button>
                 </DialogActions>
             </Dialog>
